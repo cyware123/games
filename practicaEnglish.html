@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>
+.:: Raulitus ::.
+</title>
+
+
+<style>
+
+
+body{
+
+font-family:Arial,sans-serif;
+
+margin:0;
+
+padding:20px;
+
+background:#eef3f8;
+
+}
+
+
+h1{
+
+text-align:center;
+
+color:#0d6efd;
+
+}
+
+
+
+.toolbar{
+
+background:white;
+
+padding:20px;
+
+border-radius:15px;
+
+display:flex;
+
+flex-wrap:wrap;
+
+gap:15px;
+
+align-items:end;
+
+margin-bottom:20px;
+
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
+
+
+
+.toolbar div{
+
+display:flex;
+
+flex-direction:column;
+
+}
+
+
+
+select,input{
+
+padding:10px;
+
+border-radius:8px;
+
+border:1px solid #ccc;
+
+}
+
+
+
+button{
+
+padding:10px 18px;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+}
+
+
+
+.start{
+
+background:#198754;
+
+color:white;
+
+}
+
+
+.stop{
+
+background:#dc3545;
+
+color:white;
+
+}
+
+
+.add{
+
+background:#0d6efd;
+
+color:white;
+
+}
+
+
+
+#list{
+
+display:flex;
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+
+
+.card{
+
+background:white;
+
+padding:20px;
+
+border-radius:15px;
+
+border:2px solid #ddd;
+
+}
+
+
+
+.card.active{
+
+border-color:#198754;
+
+box-shadow:0 0 15px rgba(25,135,84,.4);
+
+}
+
+
+
+.row{
+
+display:flex;
+
+gap:15px;
+
+align-items:center;
+
+}
+
+
+
+.qa{
+
+flex:1;
+
+}
+
+
+
+.qa input{
+
+width:100%;
+
+font-size:18px;
+
+}
+
+
+
+.delete{
+
+background:#dc3545;
+
+color:white;
+
+}
+
+
+
+@media(max-width:700px){
+
+
+.row{
+
+flex-direction:column;
+
+align-items:stretch;
+
+}
+
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<h1>
+Let's Practice English
+</h1>
+
+
+
+
+<div class="toolbar">
+
+
+
+<div>
+
+<label>
+Question Speed
+</label>
+
+<select id="qSpeed">
+
+<option value="0.5">
+Slow
+</option>
+
+<option value="1" selected>
+Normal
+</option>
+
+<option value="1.5">
+Fast
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div>
+
+<label>
+Answer Speed
+</label>
+
+
+<select id="aSpeed">
+
+
+<option value="0.5">
+Slow
+</option>
+
+
+<option value="1" selected>
+Normal
+</option>
+
+
+<option value="1.5">
+Fast
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div>
+
+<label>
+Pause
+</label>
+
+
+<select id="pause">
+
+<option value="1000">
+1 sec
+</option>
+
+
+<option value="2000" selected>
+2 sec
+</option>
+
+
+<option value="3000">
+3 sec
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<button class="start" onclick="startTrainer()">
+
+▶ Start
+
+</button>
+
+
+<button class="stop" onclick="stopTrainer()">
+
+■ Stop
+
+</button>
+
+
+
+<button class="add" onclick="addConversation()">
+
++ Add
+
+</button>
+
+
+
+</div>
+
+
+
+
+<label>
+
+<input type="checkbox" id="selectAll">
+
+Select All
+
+</label>
+
+
+
+<br><br>
+
+
+
+<div id="list">
+
+
+<!-- JAVASCRIPT CREARÁ LAS CAJAS AQUÍ -->
+
+
+</div>
+
+
+
+
+<script>
+
+
+/*
+AQUI IRA EL JAVASCRIPT
+
+- Crear cajas automáticamente
+- Guardar localStorage
+- Eliminar
+- Agregar
+- Voz masculina
+- Voz femenina
+- Leer conversaciones
+
+*/
+let conversations=[];
+
+let running=false;
+
+let maleVoice=null;
+
+let femaleVoice=null;
+
+
+//============================
+// CARGAR VOCES
+//============================
+
+function loadMaleVoice(){
+
+    let voices=speechSynthesis.getVoices();
+
+    maleVoice =
+    voices.find(v =>
+        v.lang.includes("en") &&
+        (
+        v.name.includes("Male") ||
+        v.name.includes("David") ||
+        v.name.includes("George") ||
+        v.name.includes("Mark")
+        )
+    );
+
+
+    if(!maleVoice){
+
+        maleVoice =
+        voices.find(v =>
+            v.lang.includes("en")
+        );
+
+    }
+
+}
+
+
+function loadFemaleVoice(){
+
+    let voices=speechSynthesis.getVoices();
+
+
+    femaleVoice =
+    voices.find(v =>
+        v.lang.includes("en") &&
+        (
+        v.name.includes("Samantha") ||
+        v.name.includes("Victoria") ||
+        v.name.includes("Karen") ||
+        v.name.includes("Susan") ||
+        v.name.includes("Hazel") ||
+        v.name.includes("Zira") ||
+        v.name.includes("Jenny") ||
+        v.name.includes("Aria")
+        )
+    );
+
+
+}
+
+
+
+function loadVoices(){
+
+    loadMaleVoice();
+
+    loadFemaleVoice();
+
+}
+
+
+
+speechSynthesis.onvoiceschanged=loadVoices;
+
+loadVoices();
+
+
+
+//============================
+// LOCALSTORAGE
+//============================
+
+function save(){
+
+localStorage.setItem(
+"trainer-data",
+JSON.stringify(conversations)
+);
+
+}
+
+
+function load(){
+
+let data=
+localStorage.getItem("trainer-data");
+
+
+if(data){
+
+conversations=
+JSON.parse(data);
+
+}else{
+
+conversations=[
+
+{
+selected:true,
+question:"How are you?",
+answer:"I'm fine, thank you."
+}
+
+];
+
+}
+
+render();
+
+}
+
+
+
+//============================
+// MOSTRAR CAJAS
+//============================
+
+function render(){
+
+let list=
+document.getElementById("list");
+
+list.innerHTML="";
+
+
+conversations.forEach((item,index)=>{
+
+
+let card=
+document.createElement("div");
+
+
+card.className="card";
+
+
+card.innerHTML=`
+
+<div class="row">
+
+
+<input 
+type="checkbox"
+${item.selected?"checked":""}
+
+onchange="
+conversations[${index}].selected=this.checked;
+save();
+">
+
+
+<div class="qa">
+
+
+<label>
+Question 👨
+</label>
+
+
+<input 
+value="${item.question}"
+
+oninput="
+conversations[${index}].question=this.value;
+save();
+">
+
+
+
+<br><br>
+
+
+
+<label>
+Answer 👩
+</label>
+
+
+<input 
+value="${item.answer}"
+
+oninput="
+conversations[${index}].answer=this.value;
+save();
+">
+
+
+</div>
+
+
+
+<button 
+class="delete"
+
+onclick="deleteConversation(${index})">
+
+Delete
+
+</button>
+
+
+</div>
+
+`;
+
+list.appendChild(card);
+
+
+});
+
+}
+
+
+
+//============================
+// ADD
+//============================
+
+function addConversation(){
+
+conversations.push({
+
+selected:true,
+
+question:"",
+
+answer:""
+
+});
+
+
+save();
+
+render();
+
+}
+
+
+
+//============================
+// DELETE
+//============================
+
+function deleteConversation(index){
+
+conversations.splice(index,1);
+
+save();
+
+render();
+
+}
+
+
+
+//============================
+// SELECT ALL
+//============================
+
+document
+.getElementById("selectAll")
+.addEventListener("change",function(){
+
+conversations.forEach(c=>{
+
+c.selected=this.checked;
+
+});
+
+
+save();
+
+render();
+
+
+});
+
+
+
+
+//============================
+// HABLAR
+//============================
+
+function speak(text,voice,speed){
+
+return new Promise(resolve=>{
+
+speechSynthesis.cancel();
+
+
+let u=
+new SpeechSynthesisUtterance(text);
+
+
+u.lang="en-US";
+
+u.rate=speed;
+
+
+if(voice){
+
+u.voice=voice;
+
+}
+
+
+u.onend=function(){
+
+resolve();
+
+};
+
+
+speechSynthesis.speak(u);
+
+
+});
+
+
+}
+
+
+
+
+//============================
+// PAUSA
+//============================
+
+function wait(ms){
+
+return new Promise(resolve=>
+
+setTimeout(resolve,ms)
+
+);
+
+}
+
+
+
+
+
+//============================
+// START
+//============================
+
+async function startTrainer(){
+
+
+if(running)return;
+
+
+running=true;
+
+
+
+while(running){
+
+
+let selected=
+conversations.filter(c=>c.selected);
+
+
+
+for(let i=0;i<selected.length;i++){
+
+
+if(!running)break;
+
+
+let item=selected[i];
+
+
+let cards=
+document.querySelectorAll(".card");
+
+
+cards.forEach(c=>
+
+c.classList.remove("active")
+
+);
+
+
+cards[
+conversations.indexOf(item)
+]
+.classList.add("active");
+
+
+
+
+
+// QUESTION 👨
+
+await speak(
+
+item.question,
+
+maleVoice,
+
+parseFloat(
+document.getElementById("qSpeed").value
+)
+
+);
+
+
+
+
+
+await wait(
+
+parseInt(
+document.getElementById("pause").value
+)
+
+);
+
+
+
+
+
+// ANSWER 👩
+
+await speak(
+
+item.answer,
+
+femaleVoice,
+
+parseFloat(
+document.getElementById("aSpeed").value
+)
+
+);
+
+
+
+
+
+await wait(
+
+parseInt(
+document.getElementById("pause").value
+)
+
+);
+
+
+
+}
+
+
+}
+
+
+}
+
+
+
+
+//============================
+// STOP
+//============================
+
+function stopTrainer(){
+
+running=false;
+
+speechSynthesis.cancel();
+
+
+document
+.querySelectorAll(".card")
+.forEach(c=>
+
+c.classList.remove("active")
+
+);
+
+
+}
+
+
+
+// INICIAR
+
+load();
+
+</script>
+
+
+
+</body>
+
+</html>
