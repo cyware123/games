@@ -3,3 +3,5 @@ data/.build-cache/
 test-results/
 __pycache__/
 dist/
+engine/stockfish.js
+engine/stockfish.wasm

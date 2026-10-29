@@ -2,21 +2,19 @@
 
 Aplicación de ajedrez en español para PC, tableta y celular. Funciona sin Internet cuando se conserva la carpeta completa. No usa cuentas, APIs de juego ni un CDN.
 
-## Iniciar en Windows
+## Abrir sin instalar ni ejecutar otros programas
 
-1. Conserva juntos todos los archivos y las carpetas `data`, `engine` y `vendor`.
-2. Haz doble clic en **INICIAR.bat**.
-3. El navegador se abrirá automáticamente. Mantén la consola abierta mientras juegas.
+1. Extrae el ZIP completo.
+2. Abre **index.html** con doble clic en Chrome, Edge o Firefox actualizado.
+3. También puedes abrir **enroque-portatil.html**: contiene la aplicación, los estilos, las reglas, el banco completo y Stockfish en un solo HTML. Ese archivo se puede copiar solo, sin el resto de carpetas.
 
-El iniciador utiliza PowerShell, incluido en Windows. No necesita npm, Python ni instalar paquetes. Stockfish necesita un servidor local para cargar WebAssembly: abrir únicamente `index.html` muestra las instrucciones de inicio.
+No hay BAT, PowerShell, Python, npm ni servidor necesarios para jugar. HTML, CSS y JavaScript se mantienen separados para editar el proyecto; el HTML portátil es una edición generada con esos mismos archivos.
 
-En macOS/Linux, ejecuta `./iniciar.sh` (necesita Python 3) y abre `http://127.0.0.1:8765`.
+Stockfish se prepara dentro de `engine/embedded.js`. JavaScript crea el motor y su módulo de memoria desde datos ya incluidos en el archivo, mediante URL Blob. No se intenta descargar un `.wasm` a través de `file://` ni se hace una petición HTTP. El módulo de Stockfish y su red NNUE siguen siendo los originales.
 
-### Celular sin Internet
+### Celular
 
-El diseño es responsive. Para usarlo desde el teléfono con el PC encendido, abre **INICIAR_MOVIL.bat**, conecta ambos a la misma red Wi-Fi y escribe en el navegador del celular la dirección local que muestra la consola. No hace falta que esa red tenga Internet. El modo móvil escucha en la red local; el iniciador normal solo escucha en el propio PC. Windows puede solicitar permiso de acceso en la red privada.
-
-El teléfono necesita alcanzar el servidor local. No se afirma funcionamiento autónomo en un visor de archivos del celular ni con el PC apagado.
+El diseño es responsive. La opción más sencilla para transferirlo es **enroque-portatil.html**, que no depende de archivos vecinos. Ábrelo con un navegador que permita JavaScript en archivos locales; algunos visores de documentos no ejecutan aplicaciones web. No se hicieron pruebas en teléfonos físicos y no se garantiza que todos los gestores de archivos móviles permitan abrir HTML interactivo.
 
 ## Banco de problemas
 
@@ -89,17 +87,16 @@ El progreso y los errores se guardan en el navegador. Exporta el JSON desde **Mi
 ## Estructura y licencias
 
 ```
-index.html               Página
+index.html               Página para abrir directamente
 style.css                Diseño responsive
 app.js                   Entrenamiento e interfaz
+enroque-portatil.html    Aplicación completa en un solo HTML
 boot.js                  Diagnóstico de archivos incompletos
-INICIAR.bat              Inicio local en Windows
-INICIAR_MOVIL.bat        Acceso opcional desde la red Wi-Fi
-servidor.ps1             Servidor local PowerShell
-iniciar.sh               Inicio en macOS/Linux
-engine/                  Stockfish, WebAssembly, UCI, licencia y fuente
+engine/embedded.js       Stockfish y su módulo incluidos en JavaScript
+engine/uci.js            Comunicación con el motor en segundo plano
+engine/                  Licencia y código fuente correspondiente
 vendor/                  chess.js y licencia BSD
- data/                   Bancos locales CC0 y manifiesto
+data/                    Bancos locales CC0 y manifiesto
 ```
 
 Consulta **SOURCES.md**, **ASSETS.sha256** y `engine/COPYING.txt`. El código fuente correspondiente a Stockfish se incluye en `engine/stockfish-corresponding-source.tar.gz`, con la red lite y las instrucciones de compilación del proyecto original.
@@ -113,7 +110,10 @@ npm ci
 npm test
 npx playwright install chromium
 npm run test:browser
+npm run test:local
 npm run data:build
+npm run engine:prepare
+npm run build:portable
 ```
 
 La última orden requiere Internet para descargar las fuentes fijadas por commit y verificar sus SHA256. La aplicación preparada no la ejecuta al iniciar.
@@ -125,4 +125,4 @@ Validación realizada:
 - Perft inicial hasta profundidad 4 y Kiwipete hasta profundidad 3.
 - Chromium: ejercicios avanzados, mates alternativos, ayuda repetida tras tres fallos, repertorio con negras, Stockfish real, MultiPV, importación y análisis PGN, finales y navegación.
 - Ocho secciones y tamaños de 360, 390, 768 y 1440 px. Las pruebas bloquean solicitudes fuera del servidor local.
-- Servidor PowerShell ejecutado con PowerShell 7 en Linux y comprobado con Chromium, incluida la carga WASM y su MIME. El inicio de un navegador se simuló en esa prueba; no se ejecutó el archivo BAT en un Windows físico ni se hicieron pruebas en teléfonos físicos.
+- La prueba local intenta abrir el HTML con `file://`. El navegador administrado del entorno bloquea esas direcciones; en ese caso prueba el mismo HTML en un origen opaco con Internet desactivado. Stockfish, partida, análisis, datos y ayuda funcionan allí sin solicitudes HTTP ni descarga de archivos locales. No se ejecutó una prueba en un Windows físico ni en teléfonos físicos.

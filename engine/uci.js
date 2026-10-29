@@ -8,6 +8,30 @@
       this.ready = null;
       this.generation = 0;
     }
+    createWorkerURL() {
+      const embedded = window.ENROQUE_ENGINE;
+      if (!embedded?.source || !embedded?.wasmBase64)
+        throw new Error(
+          "Falta engine/embedded.js. Conserva la carpeta completa junto a index.html.",
+        );
+      if (!window.ENROQUE_ENGINE_URLS) {
+        const decoded = atob(embedded.wasmBase64);
+        const bytes = new Uint8Array(decoded.length);
+        for (let i = 0; i < decoded.length; i++)
+          bytes[i] = decoded.charCodeAt(i);
+        const wasmURL = URL.createObjectURL(
+          new Blob([bytes], { type: "application/wasm" }),
+        );
+        const scriptURL = URL.createObjectURL(
+          new Blob([embedded.source], { type: "text/javascript" }),
+        );
+        // The upstream worker accepts its WASM URL in the hash. Both blobs are
+        // created by this document; no fetch of file:// assets is needed.
+        window.ENROQUE_ENGINE_URLS = { wasmURL, scriptURL };
+      }
+      const { scriptURL, wasmURL } = window.ENROQUE_ENGINE_URLS;
+      return scriptURL + "#" + encodeURIComponent(wasmURL);
+    }
     boot() {
       if (this.ready) return this.ready;
       const generation = this.generation;
@@ -27,16 +51,16 @@
         const timer = setTimeout(
           () =>
             fail(
-              "Stockfish no terminó de cargar. Comprueba engine/stockfish.js y engine/stockfish.wasm.",
+              "Stockfish no terminó de cargar. Comprueba que engine/embedded.js está completo.",
             ),
           30000,
         );
         this.bootTimer = timer;
         try {
-          this.worker = new Worker("./engine/stockfish.js");
+          this.worker = new Worker(this.createWorkerURL());
           this.worker.onerror = () =>
             fail(
-              "No se pudo cargar Stockfish. Inicia INICIAR.bat o sirve la carpeta con Python; no abras esta versión con file://.",
+              "No se pudo cargar Stockfish. Abre index.html en una versión actualizada de Chrome, Edge o Firefox y conserva engine/embedded.js.",
             );
           this.worker.onmessage = (e) => {
             const text = String(e.data);

@@ -28,12 +28,12 @@ https://www.npmjs.com/package/stockfish/v/17.1.0
 
 Versión npm exacta: 17.1.0. Revisión indicada por el paquete: `602fd7e1a571a2be71f242942db90483731f2a1f`.
 
-Se distribuyen sin modificar los binarios lite single-thread:
+La herramienta de preparación utiliza sin modificar los binarios lite single-thread originales (los originales separados son archivos de desarrollo; no se necesitan para ejecutar la aplicación):
 
 - `stockfish-17.1-lite-single-03e3232.js` → `engine/stockfish.js`
 - `stockfish-17.1-lite-single-03e3232.wasm` → `engine/stockfish.wasm`
 
-El encabezado original de autoría se conserva. Licencia íntegra en `engine/COPYING.txt`. El archivo `engine/stockfish-corresponding-source.tar.gz` incluye código fuente de la revisión exacta, scripts de compilación y la red lite `nn-9067e33176e8.nnue`. Se omiten binarios generados, ejemplos, node_modules y redes de otras ediciones.
+Para permitir la apertura directa del HTML, `engine/embedded.js` contiene el JavaScript original como texto y el módulo original como Base64. El adaptador crea URLs Blob de esos datos en memoria; no usa un servidor ni cambia los bytes del motor. El HTML portátil contiene los mismos activos. El encabezado original de autoría se conserva. Licencia íntegra en `engine/COPYING.txt`. El archivo `engine/stockfish-corresponding-source.tar.gz` incluye código fuente de la revisión exacta, scripts de compilación y la red lite `nn-9067e33176e8.nnue`. Se omiten binarios generados, ejemplos, node_modules y redes de otras ediciones.
 
 La red lite se recuperó del archivo del proyecto original y se comprobó su SHA256 contra su nombre: comienza por `9067e33176e8`. Las instrucciones de compilación originales están en el README y build.js de ese archivo. No se recompiló ni se sustituyó el WASM por un motor propio.
 

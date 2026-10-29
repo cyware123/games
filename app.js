@@ -2347,10 +2347,9 @@ const ENDGAME_LABS = [
     return clean;
   }
   function route() {
-    if (location.protocol === "file:") return;
     if (!TRAINING.length || !OPENING_LINES.length) {
       $("#content").innerHTML =
-        '<div class="error-box"><h2>Faltan los bancos de entrenamiento</h2><p>Copia las carpetas data y engine junto a index.html e inicia INICIAR.bat.</p></div>';
+        '<div class="error-box"><h2>Faltan los bancos de entrenamiento</h2><p>Copia las carpetas data y engine junto a index.html, o abre enroque-portatil.html.</p></div>';
       return;
     }
     cancel();
