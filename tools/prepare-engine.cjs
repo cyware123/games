@@ -26,8 +26,22 @@ for (const [source, target] of Object.entries(files)) {
 fs.copyFileSync("node_modules/stockfish/Copying.txt", "engine/COPYING.txt");
 const source = fs.readFileSync("engine/stockfish.js", "utf8");
 const wasm = fs.readFileSync("engine/stockfish.wasm");
+const compatibilityFile =
+  "node_modules/stockfish/src/stockfish-17.1-asm-341ff22.js";
+const compatibility = fs.readFileSync(compatibilityFile, "utf8");
+const compatibilityHash = crypto
+  .createHash("sha256")
+  .update(compatibility)
+  .digest("hex");
+if (
+  compatibilityHash !==
+  "3651fc70f951d14fdc90f7497941ab62d59c9e70b967a451a69f92b3a3f377f0"
+)
+  throw new Error("Stockfish JS compatibility checksum mismatch.");
 const embedded = {
   version: "Stockfish 17.1 lite",
+  compatibilitySource: compatibility,
+  compatibilitySHA256: compatibilityHash,
   source,
   wasmBase64: wasm.toString("base64"),
   wasmSHA256: crypto.createHash("sha256").update(wasm).digest("hex"),

@@ -679,6 +679,7 @@ const ENDGAME_LABS = [
     games: 0,
     mistakes: [],
     audio: "off",
+    enginePreference: "auto",
   });
   let progress = blank(),
     memoryOnly = false;
@@ -788,7 +789,9 @@ const ENDGAME_LABS = [
     openingEco = "all",
     practiceInitial = Position.START,
     analysisMs = 2500;
-  const stockfish = new window.StockfishClient();
+  const stockfish = new window.StockfishClient({
+    mode: progress.enginePreference || "auto",
+  });
   function analyze(fen, options = {}) {
     return stockfish.search(fen, options);
   }
@@ -1391,7 +1394,7 @@ const ENDGAME_LABS = [
       "Rival y análisis calculados en tu dispositivo. Sin conexión y sin cuentas.",
     );
     $("#board-panel").innerHTML =
-      `<span class="eyebrow">LABORATORIO DE AJEDREZ</span><h2>Juega, revisa, entiende.</h2><label class="settings">Modo<select id="practice-mode"><option value="bot" ${practiceMode === "bot" ? "selected" : ""}>Rival automático</option><option value="free" ${practiceMode === "free" ? "selected" : ""}>Tablero libre</option></select></label><label class="settings">Tu color<select id="practice-side"><option value="w" ${practiceSide === "w" ? "selected" : ""}>Blancas</option><option value="b" ${practiceSide === "b" ? "selected" : ""}>Negras</option></select></label><label class="settings">Stockfish<select id="strength">${["Iniciación", "Club I", "Club II", "Avanzado", "Experto", "Máxima fuerza"].map((n, i) => `<option value="${i + 1}" ${strength === String(i + 1) ? "selected" : ""}>${n} · habilidad ${[0, 4, 8, 12, 16, 20][i]}</option>`).join("")}</select></label><label class="settings">Tiempo de cálculo<select id="analysis-time">${[1000, 2500, 5000, 10000].map((ms) => `<option value="${ms}" ${analysisMs === ms ? "selected" : ""}>${ms / 1000} segundos</option>`).join("")}</select></label><div id="status" class="status" role="status" aria-live="polite"></div><div id="moves" class="move-list"></div><div class="controls"><button class="secondary" data-action="undo">↶ Deshacer</button><button class="secondary" data-action="new-game">Nueva partida</button><button class="primary" data-action="analyze">Analizar posición</button></div><div id="analysis" class="analysis-result">Después de tu jugada verás una comparación con la alternativa del motor.</div><div class="controls"><button class="secondary" data-action="game-review">Revisar mis jugadas</button><button class="secondary" data-action="export-game">Exportar PGN</button><button class="secondary" data-action="import-pgn">Importar PGN</button><button class="secondary" data-action="import-fen">Cargar FEN</button></div><p class="engine-note">Stockfish 17.1 lite (NNUE), ejecutado localmente. Los análisis usan fuerza máxima y hasta tres líneas; el nivel elegido solo debilita al rival. Aumenta el tiempo para un análisis más profundo. La habilidad del motor no equivale a un Elo certificado.</p><p class="voice-notice">Cambiar de color o de modo inicia una partida nueva.</p>`;
+      `<span class="eyebrow">LABORATORIO DE AJEDREZ</span><h2>Juega, revisa, entiende.</h2><label class="settings">Modo<select id="practice-mode"><option value="bot" ${practiceMode === "bot" ? "selected" : ""}>Rival automático</option><option value="free" ${practiceMode === "free" ? "selected" : ""}>Tablero libre</option></select></label><label class="settings">Tu color<select id="practice-side"><option value="w" ${practiceSide === "w" ? "selected" : ""}>Blancas</option><option value="b" ${practiceSide === "b" ? "selected" : ""}>Negras</option></select></label><label class="settings">Compatibilidad<select id="engine-preference"><option value="auto" ${progress.enginePreference !== "js" ? "selected" : ""}>Automática</option><option value="js" ${progress.enginePreference === "js" ? "selected" : ""}>JavaScript compatible</option></select></label><label class="settings">Stockfish<select id="strength">${["Iniciación", "Club I", "Club II", "Avanzado", "Experto", "Máxima fuerza"].map((n, i) => `<option value="${i + 1}" ${strength === String(i + 1) ? "selected" : ""}>${n} · habilidad ${[0, 4, 8, 12, 16, 20][i]}</option>`).join("")}</select></label><label class="settings">Tiempo de cálculo<select id="analysis-time">${[1000, 2500, 5000, 10000].map((ms) => `<option value="${ms}" ${analysisMs === ms ? "selected" : ""}>${ms / 1000} segundos</option>`).join("")}</select></label><div id="status" class="status" role="status" aria-live="polite"></div><div id="moves" class="move-list"></div><div class="controls"><button class="secondary" data-action="undo">↶ Deshacer</button><button class="secondary" data-action="new-game">Nueva partida</button><button class="primary" data-action="analyze">Analizar posición</button></div><div id="analysis" class="analysis-result">Después de tu jugada verás una comparación con la alternativa del motor.</div><div class="controls"><button class="secondary" data-action="game-review">Revisar mis jugadas</button><button class="secondary" data-action="export-game">Exportar PGN</button><button class="secondary" data-action="import-pgn">Importar PGN</button><button class="secondary" data-action="import-fen">Cargar FEN</button></div><p id="engine-mode" class="engine-note">Motor: iniciando automáticamente la versión compatible.</p><p class="engine-note">Stockfish 17.1 lite (NNUE), ejecutado localmente. Los análisis usan fuerza máxima y hasta tres líneas; el nivel elegido solo debilita al rival. Aumenta el tiempo para un análisis más profundo. La habilidad del motor no equivale a un Elo certificado.</p><p class="voice-notice">Cambiar de color o de modo inicia una partida nueva.</p>`;
     updatePractice();
     renderBoard();
     if (practiceMode === "bot" && position.turn !== practiceSide) botTurn();
@@ -2286,6 +2289,7 @@ const ENDGAME_LABS = [
     ];
     clean.games = Math.max(0, Number(data.games) || 0);
     clean.audio = ["off", "es", "en"].includes(data.audio) ? data.audio : "off";
+    clean.enginePreference = data.enginePreference === "js" ? "js" : "auto";
     for (const m of (Array.isArray(data.mistakes) ? data.mistakes : []).slice(
       0,
       100,
@@ -2347,6 +2351,8 @@ const ENDGAME_LABS = [
     return clean;
   }
   function route() {
+    stockfish.preferredMode =
+      progress.enginePreference === "js" ? "js" : "auto";
     if (!TRAINING.length || !OPENING_LINES.length) {
       $("#content").innerHTML =
         '<div class="error-box"><h2>Faltan los bancos de entrenamiento</h2><p>Copia las carpetas data y engine junto a index.html, o abre enroque-portatil.html.</p></div>';
@@ -2700,6 +2706,15 @@ const ENDGAME_LABS = [
         cm = $("#course-mode").value;
       beginCourse(courseIndex, vi, side, cm);
     }
+    if (id === "engine-preference") {
+      progress.enginePreference = e.target.value;
+      save();
+      cancel();
+      stockfish.preferredMode = progress.enginePreference;
+      updatePractice();
+      renderBoard();
+      if (practiceMode === "bot" && position.turn !== practiceSide) botTurn();
+    }
     if (id === "strength") strength = e.target.value;
     if (id === "analysis-time") analysisMs = Number(e.target.value);
     if (id === "practice-side" || id === "practice-mode") {
@@ -2809,6 +2824,14 @@ const ENDGAME_LABS = [
       e.preventDefault();
       route();
     }
+  });
+  window.addEventListener("enroque-engine-ready", (event) => {
+    const label = document.querySelector("#engine-mode");
+    if (label)
+      label.textContent =
+        event.detail.mode === "js"
+          ? "Motor: Stockfish 17.1 · compatibilidad JavaScript. El cálculo puede ser más lento."
+          : "Motor: Stockfish 17.1 · WebAssembly local.";
   });
   window.addEventListener("hashchange", route);
   $("#streak").textContent = streak();

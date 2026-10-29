@@ -1,6 +1,6 @@
 {
   "name": "games",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Entrenamiento offline con Stockfish 17.1, 10000 problemas Lichess y repertorio ECO",
   "scripts": {
     "test": "node tests/chess.test.cjs",
@@ -9,7 +9,8 @@
     "engine:prepare": "node tools/prepare-engine.cjs",
     "package": "python3 tools/package.py",
     "build:portable": "node tools/build-portable.cjs",
-    "test:local": "node tests/local-file.cjs"
+    "test:local": "node tests/local-file.cjs",
+    "test:engine": "node tests/engine-compat.cjs"
   },
   "repository": {
     "type": "git",

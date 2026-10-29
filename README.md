@@ -10,7 +10,7 @@ Aplicación de ajedrez en español para PC, tableta y celular. Funciona sin Inte
 
 No hay BAT, PowerShell, Python, npm ni servidor necesarios para jugar. HTML, CSS y JavaScript se mantienen separados para editar el proyecto; el HTML portátil es una edición generada con esos mismos archivos.
 
-Stockfish se prepara dentro de `engine/embedded.js`. JavaScript crea el motor y su módulo de memoria desde datos ya incluidos en el archivo, mediante URL Blob. No se intenta descargar un `.wasm` a través de `file://` ni se hace una petición HTTP. El módulo de Stockfish y su red NNUE siguen siendo los originales.
+Stockfish se prepara dentro de `engine/embedded.js`. JavaScript crea el proceso de cálculo desde una URL Blob y le transfiere directamente los bytes del módulo. El adaptador entrega esos bytes a Emscripten mediante `wasmBinary`: no se usa fetch, XHR ni una URL para cargar el módulo. El binario Stockfish y su red NNUE son los originales. Si WebAssembly no puede iniciarse, se carga automáticamente la edición JavaScript oficial de Stockfish 17.1, también incluida sin conexión.
 
 ### Celular
 
@@ -65,6 +65,8 @@ Las respuestas del rival pertenecen a la solución de Lichess. Los mates alterna
 
 **Stockfish 17.1 lite single-thread NNUE**, funcionando localmente. Seis ajustes de habilidad (0, 4, 8, 12, 16 y 20). El análisis utiliza fuerza máxima independientemente del nivel elegido para el rival.
 
+En **Jugar y practicar → Compatibilidad** puedes dejar **Automática** o elegir **JavaScript compatible**. Esta preferencia se conserva en el navegador y no borra la partida. El modo JavaScript puede calcular más lento; para posiciones difíciles conviene aumentar el tiempo. La etiqueta del motor muestra cuál está funcionando.
+
 Tiempo seleccionable de 1, 2,5, 5 o 10 segundos. Análisis de posición y comparación antes/después de tus jugadas con hasta tres variantes principales (MultiPV), profundidad real y pérdida de evaluación. El tiempo y la profundidad limitan el resultado; el nivel elegido no se anuncia como un Elo certificado. La edición lite utiliza una red más pequeña que el Stockfish completo.
 
 Incluye:
@@ -111,6 +113,7 @@ npm test
 npx playwright install chromium
 npm run test:browser
 npm run test:local
+npm run test:engine
 npm run data:build
 npm run engine:prepare
 npm run build:portable
@@ -126,3 +129,5 @@ Validación realizada:
 - Chromium: ejercicios avanzados, mates alternativos, ayuda repetida tras tres fallos, repertorio con negras, Stockfish real, MultiPV, importación y análisis PGN, finales y navegación.
 - Ocho secciones y tamaños de 360, 390, 768 y 1440 px. Las pruebas bloquean solicitudes fuera del servidor local.
 - La prueba local intenta abrir el HTML con `file://`. El navegador administrado del entorno bloquea esas direcciones; en ese caso prueba el mismo HTML en un origen opaco con Internet desactivado. Stockfish, partida, análisis, datos y ayuda funcionan allí sin solicitudes HTTP ni descarga de archivos locales. No se ejecutó una prueba en un Windows físico ni en teléfonos físicos.
+
+- Compatibilidad del motor: se verificó WebAssembly con fetch/XHR bloqueados, Stockfish JavaScript con WebAssembly desactivado y la recuperación automática ante un módulo WebAssembly inválido. Los tres casos encontraron mate sin conexiones de red.

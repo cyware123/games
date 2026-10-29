@@ -64,6 +64,13 @@ const root = path.resolve(__dirname, "..");
     { timeout: 25000 },
   );
   assert.match(await page.locator("#analysis").innerText(), /Stockfish/);
+  const historyBefore=await page.locator('#moves').innerText();
+  await page.selectOption('#engine-preference','js');
+  assert.equal(await page.locator('#moves').innerText(),historyBefore);
+  await move('g1f3');
+  await page.waitForFunction(()=>document.querySelector('#moves').innerText.split('\n').length>=4&&!document.querySelector('[data-square="52"]').disabled,null,{timeout:40000});
+  assert.match(await page.locator('#engine-mode').innerText(),/compatibilidad JavaScript/);
+  console.log('Modo JavaScript compatible: juega y analiza sin borrar la partida.');
   await page.click('nav a[href="#tactica"]');
   await page.selectOption("#filter-length", "all");
   await page.fill("#filter-query", "00008");

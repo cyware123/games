@@ -1,69 +1,130 @@
 /* Stockfish 17.1 adapter: one serialized UCI queue, full-strength analysis. */
 (() => {
   class StockfishClient {
-    constructor() {
+    constructor(options = {}) {
+      this.preferredMode = options.mode || "auto";
+      this.activeMode = null;
+      this.startupDiagnostics = [];
       this.worker = null;
       this.queue = [];
       this.active = null;
       this.ready = null;
       this.generation = 0;
     }
-    createWorkerURL() {
+    createWorkerURL(mode) {
       const embedded = window.ENROQUE_ENGINE;
-      if (!embedded?.source || !embedded?.wasmBase64)
+      if (!embedded)
         throw new Error(
-          "Falta engine/embedded.js. Conserva la carpeta completa junto a index.html.",
+          "Falta engine/embedded.js. Extrae la carpeta completa o abre el HTML portátil actualizado.",
         );
-      if (!window.ENROQUE_ENGINE_URLS) {
-        const decoded = atob(embedded.wasmBase64);
-        const bytes = new Uint8Array(decoded.length);
-        for (let i = 0; i < decoded.length; i++)
-          bytes[i] = decoded.charCodeAt(i);
-        const wasmURL = URL.createObjectURL(
-          new Blob([bytes], { type: "application/wasm" }),
+      window.ENROQUE_ENGINE_WORKERS ||= {};
+      if (window.ENROQUE_ENGINE_WORKERS[mode])
+        return window.ENROQUE_ENGINE_WORKERS[mode];
+      let source;
+      if (mode === "js") {
+        if (!embedded.compatibilitySource)
+          throw new Error(
+            "Falta el motor de compatibilidad. Usa la versión actualizada del proyecto.",
+          );
+        source = "self.WebAssembly=undefined;\n" + embedded.compatibilitySource;
+      } else {
+        if (!embedded.source || !embedded.wasmBase64)
+          throw new Error("Los datos del motor están incompletos.");
+        const pattern = "u=function(n){r={locateFile:function(e)";
+        if (embedded.source.split(pattern).length !== 2)
+          throw new Error(
+            "La interfaz de esta versión del motor no coincide con el adaptador.",
+          );
+        // Supply Emscripten wasmBinary directly. The worker never fetches a
+        // file: or blob: URL for WASM, which avoids file-origin restrictions.
+        const configured = embedded.source.replace(
+          pattern,
+          "u=function(n){r={wasmBinary:self.__ENROQUE_WASM,locateFile:function(e)",
         );
-        const scriptURL = URL.createObjectURL(
-          new Blob([embedded.source], { type: "text/javascript" }),
-        );
-        // The upstream worker accepts its WASM URL in the hash. Both blobs are
-        // created by this document; no fetch of file:// assets is needed.
-        window.ENROQUE_ENGINE_URLS = { wasmURL, scriptURL };
+        source =
+          'self.onmessage=function(event){if(event.data?.type!=="enroque-init")return;self.__ENROQUE_WASM=new Uint8Array(event.data.buffer);self.onmessage=null;(function(){\n' +
+          configured +
+          "\n})();};";
       }
-      const { scriptURL, wasmURL } = window.ENROQUE_ENGINE_URLS;
-      return scriptURL + "#" + encodeURIComponent(wasmURL);
+      const url = URL.createObjectURL(
+        new Blob([source], { type: "text/javascript" }),
+      );
+      window.ENROQUE_ENGINE_WORKERS[mode] = url;
+      return url;
     }
     boot() {
       if (this.ready) return this.ready;
+      this.startupDiagnostics = [];
       const generation = this.generation;
-      this.ready = new Promise((resolve, reject) => {
-        let settled = false;
+      this.ready = this.bootModes(generation);
+      return this.ready;
+    }
+    async bootModes(generation) {
+      const modes =
+        this.preferredMode === "js"
+          ? ["js"]
+          : this.preferredMode === "wasm"
+            ? ["wasm"]
+            : ["wasm", "js"];
+      for (const mode of modes) {
+        try {
+          await this.bootMode(mode, generation);
+          return;
+        } catch (error) {
+          if (generation !== this.generation || error.message === "cancelled")
+            throw new Error("cancelled");
+          this.startupDiagnostics.push(
+            (mode === "wasm" ? "WebAssembly" : "JavaScript") +
+              ": " +
+              error.message,
+          );
+          this.worker?.terminate();
+          this.worker = null;
+        }
+      }
+      throw new Error(
+        "Stockfish no pudo iniciar. " + this.startupDiagnostics.join(" | "),
+      );
+    }
+    bootMode(mode, generation) {
+      return new Promise((resolve, reject) => {
+        let settled = false,
+          ownedWorker = null;
         this.bootReject = reject;
-        this.bootTimer = null;
         const fail = (message) => {
-          if (generation !== this.generation) return;
+          if (
+            generation !== this.generation ||
+            (ownedWorker && this.worker !== ownedWorker)
+          )
+            return;
           clearTimeout(timer);
           if (!settled) {
             settled = true;
+            this.bootReject = null;
             reject(new Error(message));
+          } else {
+            this.rejectAll(message);
+            this.ready = null;
           }
-          this.rejectAll(message);
+          this.worker?.terminate();
+          this.worker = null;
         };
         const timer = setTimeout(
-          () =>
-            fail(
-              "Stockfish no terminó de cargar. Comprueba que engine/embedded.js está completo.",
-            ),
+          () => fail("El motor no terminó de iniciar dentro de 30 segundos."),
           30000,
         );
         this.bootTimer = timer;
         try {
-          this.worker = new Worker(this.createWorkerURL());
-          this.worker.onerror = () =>
-            fail(
-              "No se pudo cargar Stockfish. Abre index.html en una versión actualizada de Chrome, Edge o Firefox y conserva engine/embedded.js.",
-            );
-          this.worker.onmessage = (e) => {
-            const text = String(e.data);
+          this.worker = new Worker(this.createWorkerURL(mode));
+          ownedWorker = this.worker;
+          this.worker.onerror = (event) => {
+            event.preventDefault?.();
+            fail(event.message || "El navegador detuvo el proceso del motor.");
+          };
+          this.worker.onmessage = (event) => {
+            if (generation !== this.generation || this.worker !== ownedWorker)
+              return;
+            const text = String(event.data);
             if (text === "uciok") {
               this.worker.postMessage("setoption name Threads value 1");
               this.worker.postMessage("setoption name Hash value 32");
@@ -74,17 +135,35 @@
               settled = true;
               clearTimeout(timer);
               this.bootReject = null;
+              this.activeMode = mode;
+              window.dispatchEvent(
+                new CustomEvent("enroque-engine-ready", {
+                  detail: {
+                    mode,
+                    diagnostics: this.startupDiagnostics.slice(),
+                  },
+                }),
+              );
               resolve();
               return;
             }
             this.receive(text);
           };
+          if (mode === "wasm") {
+            const decoded = atob(window.ENROQUE_ENGINE.wasmBase64),
+              bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; i++)
+              bytes[i] = decoded.charCodeAt(i);
+            this.worker.postMessage(
+              { type: "enroque-init", buffer: bytes.buffer },
+              [bytes.buffer],
+            );
+          }
           this.worker.postMessage("uci");
-        } catch (e) {
-          fail("El navegador no permite cargar el motor local: " + e.message);
+        } catch (error) {
+          fail(error.message);
         }
       });
-      return this.ready;
     }
     receive(text) {
       const job = this.active;
@@ -136,7 +215,11 @@
           move: move === "(none)" || move === "0000" ? null : move,
           lines: [...job.lines.values()].sort((a, b) => a.multipv - b.multipv),
           ms: Date.now() - job.started,
-          engine: "Stockfish 17.1 lite",
+          engine:
+            this.activeMode === "js"
+              ? "Stockfish 17.1 · compatibilidad JavaScript"
+              : "Stockfish 17.1 lite",
+          mode: this.activeMode,
         };
         this.active = null;
         job.resolve(result);
