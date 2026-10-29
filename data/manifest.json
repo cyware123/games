@@ -1,0 +1,23 @@
+{
+  "puzzles": 10000,
+  "multipleMovePuzzles": 8847,
+  "openingLines": 3865,
+  "solutionPlies": 36614,
+  "invalid": [],
+  "byLevel": {
+    "principiante": 4537,
+    "intermedio": 3376,
+    "avanzado": 2087
+  },
+  "coreThemes": {
+    "Clavadas": 613,
+    "Ataques dobles": 1387,
+    "Descubiertas": 556,
+    "Sacrificios": 732,
+    "Defensa": 602,
+    "Mates": 2550
+  },
+  "endgames": 4660,
+  "puzzleSource": "https://github.com/Ali-Raza764/chess_puzzles_api/tree/94e65c36af8358a04d3c835984435845fc638fe3",
+  "license": "CC0-1.0"
+}

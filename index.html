@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#183e35" />
+    <title>Enroque · Tu siguiente gran movimiento</title>
+    <script src="boot.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#inicio"
+        ><span class="brand-icon">♞</span> enroque<span class="brand-dot"
+          >.</span
+        ></a
+      >
+      <div class="workspace-label">TU CLUB DE AJEDREZ</div>
+      <nav aria-label="Principal">
+        <a href="#inicio" data-page="inicio">◈ <span>Mi entrenamiento</span></a
+        ><a href="#practicar" data-page="practicar"
+          >♟ <span>Jugar y practicar</span></a
+        ><a href="#tactica" data-page="tactica"
+          >⚡ <span>Tácticas</span><small>10k</small></a
+        ><a href="#aperturas" data-page="aperturas">▦ <span>Aperturas</span></a
+        ><a href="#finales" data-page="finales">♔ <span>Finales</span></a
+        ><a href="#repaso" data-page="repaso">↶ <span>Repasar fallos</span></a
+        ><a href="#academia" data-page="academia">▤ <span>Academia</span></a
+        ><a href="#progreso" data-page="progreso">→ <span>Mi progreso</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="daily-note">
+          <span>✦ UN POCO, CADA DÍA</span>
+          <p>Las buenas jugadas empiezan con un buen hábito.</p>
+          <div class="mini-pieces">♙ ♘ ♗ ♖ ♕ ♔</div>
+        </div>
+        <div class="profile">
+          <div class="avatar">T</div>
+          <div>
+            <strong>Tu espacio personal</strong
+            ><small>Aprende a tu ritmo</small>
+          </div>
+          <span class="online"></span>
+        </div>
+      </div>
+    </aside>
+    <div class="app">
+      <header class="topbar">
+        <div class="breadcrumb">
+          Tu camino, jugada a jugada <span>/</span>
+          <strong id="crumb">Mi entrenamiento</strong>
+        </div>
+        <div class="top-actions">
+          <label class="audio-label"
+            >Audio
+            <select id="audio-lang" aria-label="Idioma del audio">
+              <option value="off">Sin voz</option>
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select></label
+          ><button
+            class="icon-button"
+            id="audio-stop"
+            aria-label="Detener audio"
+          >
+            ■</button
+          ><span class="streak">♨ <b id="streak">1</b> día de práctica</span
+          ><button class="icon-button" id="help" aria-label="Cómo funciona">
+            ?
+          </button>
+          <div class="avatar small">T</div>
+        </div>
+      </header>
+      <main id="content">
+        <noscript>Activa JavaScript para entrenar.</noscript>
+        <p>Cargando entrenamiento local…</p>
+      </main>
+      <footer>
+        Hecho para disfrutar del proceso.
+        <span>Una jugada mejor, cada día. ♟</span>
+      </footer>
+    </div>
+    <dialog id="lesson">
+      <button class="close icon-button" aria-label="Cerrar">×</button>
+      <div id="lesson-content"></div>
+    </dialog>
+    <script src="vendor/chess-rules.js" defer></script>
+    <script src="data/puzzles.js" defer></script>
+    <script src="data/openings.js" defer></script>
+    <script src="engine/uci.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>

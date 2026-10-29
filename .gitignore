@@ -1,0 +1,5 @@
+node_modules/
+data/.build-cache/
+test-results/
+__pycache__/
+dist/

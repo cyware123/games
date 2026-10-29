@@ -1,0 +1,31 @@
+{
+  "name": "games",
+  "version": "3.0.0",
+  "description": "Entrenamiento offline con Stockfish 17.1, 10000 problemas Lichess y repertorio ECO",
+  "main": "index.js",
+  "scripts": {
+    "start": "python3 -m http.server 8765 --bind 127.0.0.1",
+    "test": "node tests/chess.test.cjs",
+    "test:browser": "node tests/browser.cjs && node tests/help.cjs",
+    "data:build": "python3 tools/fetch-data.py",
+    "engine:prepare": "node tools/prepare-engine.cjs",
+    "package": "python3 tools/package.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cyware123/games.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/cyware123/games/issues"
+  },
+  "homepage": "https://github.com/cyware123/games#readme",
+  "devDependencies": {
+    "chess.js": "^1.4.0",
+    "playwright": "1.62.1",
+    "stockfish": "17.1.0"
+  }
+}
